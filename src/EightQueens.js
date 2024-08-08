@@ -6,17 +6,16 @@ import "./css/EightQueens.css";
 import * as attack from "./UnderAttack.js";
 import * as helpers from "./helpers.js";
 import Chessboard from "chessboardjsx";
-import didYouKnowArray from "./DidYouKnow.js";
 import queenUnderAttackSvg from "./queenUnderAttack.svg";
 import React, { Component } from "react";
 import Status from "./Status.js";
-import Tidbits from "./Tidbits";
-import Timer from "./Timer.js";
 import Title from "./Title.js";
+import { placeQueen, generateSolution } from "./LogicEngine.js";
 
-const gameName = "Eight Queens";
-const gameVersion = "0.6.1";
+const gameName = "Eight Queens Solver";
+const gameVersion = "0.0.1";
 const gameHome = "https://github.com/attogram/EightQueens";
+let numberSolvedID = "EightQueensSolve";
 
 class EightQueens extends Component {
   /**
@@ -24,16 +23,18 @@ class EightQueens extends Component {
    */
   constructor(props) {
     super(props);
+    this.listOfSquares = generateSolution();
     this.state = {
       attacked: [], // Array of queens under attack
       position: {}, // Object of current board position
       gameStatus: "playing",
       queensOnBoard: 0,
       queensUnderAttack: 0,
-      showAttackPaths: false,
+      showAttackPaths: true,
       attackedSquares: 0,
     };
-    this.onSquareClick = this.onSquareClick.bind(this);
+
+    //this.onSquareClick = this.onSquareClick.bind(this);
     this.toggleAttackPaths = this.toggleAttackPaths.bind(this);
   }
 
@@ -42,49 +43,50 @@ class EightQueens extends Component {
    *
    * @param square
    */
-  onSquareClick = (square) => {
-    let position = this.state.position; // Get the current board position
-    if (position[[square]]) {
-      delete position[[square]]; // Clicked on a Queen, delete it
-    } else {
-      if (Object.keys(position).length === 8) {
-        return; // Max 8 queens on board
-      }
-      position[[square]] = "wQ"; // Clicked on an empty square, add a Queen
-    }
+  // onSquareClick = (square) => {
+  //   let position = this.state.position; // Get the current board position
+  //   console.log(position);
+  //   if (position[[square]]) {
+  //     delete position[[square]]; // Clicked on a Queen, delete it
+  //   } else {
+  //     if (Object.keys(position).length === 8) {
+  //       return; // Max 8 queens on board
+  //     }
+  //     position[[square]] = "wQ"; // Clicked on an empty square, add a Queen
+  //   }
 
-    const attacked = attack.underAttack(position); // get array of Queens under attack
+  //   const attacked = attack.underAttack(position); // get array of Queens under attack
 
-    Object.keys(position).forEach(function (square) {
-      // For each queen on board
-      if (attacked.includes(square) && square !== "bQ") {
-        // if Queen is under attack
-        position[square] = "bQ"; // Flip Queen under attack
-      } else if (square !== "wQ") {
-        // If Queen is no longer under attack
-        position[square] = "wQ"; // Queen at peace
-      }
-    });
+  //   Object.keys(position).forEach(function (square) {
+  //     // For each queen on board
+  //     if (attacked.includes(square) && square !== "bQ") {
+  //       // if Queen is under attack
+  //       position[square] = "bQ"; // Flip Queen under attack
+  //     } else if (square !== "wQ") {
+  //       // If Queen is no longer under attack
+  //       position[square] = "wQ"; // Queen at peace
+  //     }
+  //   });
 
-    let queensOnBoard = Object.keys(position).length;
-    let queensUnderAttack = 0;
-    if (attacked) {
-      queensUnderAttack = attacked.length;
-    }
-    let gameStatus = "playing";
-    if (queensOnBoard === 8 && queensUnderAttack === 0) {
-      gameStatus = "solved";
-    }
+  //   let queensOnBoard = Object.keys(position).length;
+  //   let queensUnderAttack = 0;
+  //   if (attacked) {
+  //     queensUnderAttack = attacked.length;
+  //   }
+  //   let gameStatus = "playing";
+  //   if (queensOnBoard === 8 && queensUnderAttack === 0) {
+  //     gameStatus = "solved";
+  //   }
 
-    this.setState({
-      attacked: attacked,
-      position: position,
-      queensOnBoard: queensOnBoard,
-      queensUnderAttack: queensUnderAttack,
-      attackedSquares: attack.attackedSquares(position),
-      gameStatus: gameStatus,
-    });
-  };
+  //   this.setState({
+  //     attacked: attacked,
+  //     position: position,
+  //     queensOnBoard: queensOnBoard,
+  //     queensUnderAttack: queensUnderAttack,
+  //     attackedSquares: attack.attackedSquares(position),
+  //     gameStatus: gameStatus,
+  //   });
+  // };
 
   /**
    * Play clicked the Attack Paths button
@@ -107,16 +109,19 @@ class EightQueens extends Component {
   render() {
     // force board refresh by using FEN string in _position_ and _key_ Chessboard props
     const fenPosition = helpers.objToFen(this.state.position);
+    // setTimeout(() => {
+      if(this.listOfSquares.length !== 0) {
+        this.setState(placeQueen(this.listOfSquares.pop(), this.state.position));
+      }
+    // }, 1000);
 
     // Highlight squares under attack
     let squareStyles = {};
-    let showAttackPathsText = "Show";
     if (this.state.showAttackPaths) {
-      showAttackPathsText = "Hide";
       if (this.state.attackedSquares.length) {
         this.state.attackedSquares.forEach(function (square) {
           squareStyles[square] = {
-            background: "radial-gradient(circle, orange, transparent 50%)",
+            background: "radial-gradient(circle, red, transparent 100%)",
           };
         });
       }
@@ -134,10 +139,9 @@ class EightQueens extends Component {
             queensOnBoard={this.state.queensOnBoard}
             queensUnderAttack={this.state.queensUnderAttack}
           />
-          <Timer gameStatus={this.state.gameStatus} />
         </div>
         <Chessboard
-          id="EightQueens"
+          id={numberSolvedID}
           position={fenPosition}
           key={fenPosition}
           sparePieces={false}
@@ -158,24 +162,6 @@ class EightQueens extends Component {
             ),
           }}
         />
-        <div className="EightQueens-didyouknow">
-          <Tidbits interval="8000" order="random" tidbits={didYouKnowArray} />
-        </div>
-        <div className="EightQueens-instructions">
-          - Place <b>Eight Queens</b> with none under attack!
-          <br />- Click a square to place a Queen. Click a Queen to remove it.
-        </div>
-        <div className="EightQueens-header">
-          <button
-            className="EightQueens-paths"
-            onClick={this.toggleAttackPaths}
-          >
-            {showAttackPathsText} attack paths
-          </button>
-          <button className="EightQueens-restart">
-            <a href=".">Restart</a>
-          </button>
-        </div>
       </div>
     );
   }
