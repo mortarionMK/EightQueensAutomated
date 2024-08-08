@@ -17,12 +17,12 @@ class Status extends Component {
     let statusClass = "EightQueens-playing";
 
     if (!numberQueensNeeded) {
-      gameStatus = "Not Solved";
+      gameStatus = "Building Solutions";
       statusClass = "EightQueens-not";
     }
 
     if (this.props.queensOnBoard === 8 && this.props.queensUnderAttack === 0) {
-      gameStatus = "😃 SOLVED! YOU WIN";
+      gameStatus = "Computer Solution Resolved";
       statusClass = "EightQueens-win";
     }
 
